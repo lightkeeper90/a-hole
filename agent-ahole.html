@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent A-Hole | Find & Rank Nearby A-Holes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #FFB6C1;
+            --hot-pink: #FF69B4;
+            --neon-pink: #FF1493;
+            --black: #0a0a0a;
+            --dark: #111111;
+            --darker: #0d0d0d;
+            --white: #ffffff;
+            --neon-green: #39FF14;
+            --gray: #1a1a1a;
+            --gray-light: #2a2a2a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--black);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 182, 193, 0.15);
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--pink);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(255, 182, 193, 0.5));
+            animation: pulse 2s ease-in-out infinite;
+            background: transparent;
+            border: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 182, 193, 0.5)); }
+            50% { filter: drop-shadow(0 0 20px rgba(255, 182, 193, 0.8)); }
+        }
+
+        .ca-display {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: transparent;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 182, 193, 0.2);
+        }
+
+        .ca-display:hover {
+            border-color: var(--pink);
+            background: rgba(255, 182, 193, 0.05);
+        }
+
+        .ca-label {
+            color: var(--pink);
+            font-weight: 700;
+        }
+
+        .ca-value {
+            color: var(--white);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Chat Container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Messages Area */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            display: flex;
+            gap: 1rem;
+            max-width: 85%;
+            animation: messageIn 0.3s ease-out;
+        }
+
+        @keyframes messageIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .message.agent .message-avatar {
+            background: transparent;
+            border: none;
+        }
+
+        .message.agent .message-avatar img {
+            width: 25px;
+            height: 25px;
+        }
+
+        .message.user .message-avatar {
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid var(--neon-green);
+            font-size: 1.25rem;
+        }
+
+        .message-content {
+            background: var(--gray);
+            border-radius: 16px;
+            padding: 1rem 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .message.user .message-content {
+            background: rgba(255, 182, 193, 0.1);
+            border-color: rgba(255, 182, 193, 0.2);
+        }
+
+        .message-text {
+            line-height: 1.6;
+            font-size: 0.9375rem;
+        }
+
+        .message-text p {
+            margin-bottom: 0.75rem;
+        }
+
+        .message-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.5rem 0;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: var(--pink);
+            border-radius: 50%;
+            animation: typing 1.4s ease-in-out infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); opacity: 0.5; }
+            50% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        /* A-Hole Cards */
+        .ahole-card {
+            background: var(--darker);
+            border: 1px solid rgba(255, 182, 193, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 0.75rem;
+            transition: all 0.3s;
+        }
+
+        .ahole-card:hover {
+            border-color: var(--pink);
+            box-shadow: 0 0 20px rgba(255, 182, 193, 0.1);
+        }
+
+        .ahole-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .ahole-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.25rem;
+            color: var(--pink);
+        }
+
+        .ahole-rank {
+            background: rgba(255, 182, 193, 0.15);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            color: var(--pink);
+            font-weight: 700;
+        }
+
+        .ahole-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .ahole-stat {
+            text-align: center;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+
+        .ahole-stat-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.25rem;
+            color: var(--hot-pink);
+        }
+
+        .ahole-stat-label {
+            font-size: 0.625rem;
+            text-transform: uppercase;
+            opacity: 0.6;
+            letter-spacing: 0.05em;
+        }
+
+        .ahole-desc {
+            font-size: 0.8125rem;
+            opacity: 0.7;
+            line-height: 1.5;
+        }
+
+        .ahole-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .ahole-tag {
+            background: rgba(255, 182, 193, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.6875rem;
+            color: var(--pink);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .quick-action {
+            background: rgba(255, 182, 193, 0.05);
+            border: 1px solid rgba(255, 182, 193, 0.2);
+            color: var(--pink);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8125rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .quick-action:hover {
+            background: rgba(255, 182, 193, 0.15);
+            border-color: var(--pink);
+        }
+
+        /* Leaderboard */
+        .leaderboard {
+            background: var(--darker);
+            border: 1px solid rgba(255, 182, 193, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+
+        .leaderboard-header {
+            background: rgba(255, 182, 193, 0.1);
+            padding: 0.75rem 1rem;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            color: var(--pink);
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(255, 182, 193, 0.05);
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .lb-rank {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+        }
+
+        .lb-rank.gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; }
+        .lb-rank.silver { background: linear-gradient(135deg, #C0C0C0, #808080); color: #000; }
+        .lb-rank.bronze { background: linear-gradient(135deg, #CD7F32, #8B4513); color: #fff; }
+        .lb-rank.normal { background: var(--gray); color: var(--pink); }
+
+        .lb-info {
+            flex: 1;
+        }
+
+        .lb-name {
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .lb-type {
+            font-size: 0.6875rem;
+            opacity: 0.6;
+        }
+
+        .lb-score {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.25rem;
+            color: var(--hot-pink);
+        }
+
+        /* Radar/Map Display */
+        .radar-container {
+            background: var(--darker);
+            border: 1px solid rgba(255, 182, 193, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .radar {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            position: relative;
+            border-radius: 50%;
+            background: 
+                radial-gradient(circle, transparent 0%, transparent 30%, rgba(255, 182, 193, 0.05) 30%, rgba(255, 182, 193, 0.05) 31%, transparent 31%),
+                radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 182, 193, 0.05) 60%, rgba(255, 182, 193, 0.05) 61%, transparent 61%),
+                radial-gradient(circle, transparent 0%, transparent 90%, rgba(255, 182, 193, 0.1) 90%);
+            border: 2px solid rgba(255, 182, 193, 0.3);
+        }
+
+        .radar::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--pink), transparent);
+            transform-origin: left center;
+            animation: radarSweep 4s linear infinite;
+        }
+
+        @keyframes radarSweep {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .radar-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .radar-blip {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--pink);
+            border-radius: 50%;
+            animation: blipPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes blipPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; }
+        }
+
+        .radar-label {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: var(--pink);
+            opacity: 0.7;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 182, 193, 0.1);
+            background: var(--darker);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .input-field {
+            flex: 1;
+            background: var(--gray);
+            border: 1px solid rgba(255, 182, 193, 0.2);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            color: var(--white);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9375rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: var(--pink);
+            box-shadow: 0 0 20px rgba(255, 182, 193, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .send-btn {
+            background: var(--pink);
+            color: var(--black);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.125rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 182, 193, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Scrollbar */
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: var(--black);
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: var(--pink);
+            border-radius: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .ahole-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .message {
+                max-width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="ahole-logo.png" alt="Agent A-Hole" class="logo-icon">
+            Agent A-Hole
+        </div>
+        <div class="ca-display" onclick="copyCA()">
+            <span class="ca-label">CA:</span>
+            <span class="ca-value" id="caValue">SCANNING...</span>
+        </div>
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            <span>ONLINE</span>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            <!-- Messages will be inserted here -->
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-wrapper">
+            <input 
+                type="text" 
+                class="input-field" 
+                id="userInput" 
+                placeholder="Ask me to find, rank, or analyze A-Holes..."
+                autocomplete="off"
+            >
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                SEND
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // A-Hole Database
+        const aholeDatabase = [
+            {
+                name: "Chad from Accounting",
+                type: "Corporate A-Hole",
+                distance: 0.3,
+                aholeScore: 94,
+                toxicity: 87,
+                annoyance: 96,
+                avoidability: 23,
+                desc: "Takes the last coffee and doesn't make more. Claims to be 'too busy' but spends 2 hours on LinkedIn daily.",
+                tags: ["#CoffeeThief", "#LinkedInLurker", "#MeetingScheduler"],
+                behaviors: ["Schedules meetings that could be emails", "Reply-alls to everything", "Uses 'circle back' unironically"]
+            },
+            {
+                name: "Karen the Manager",
+                type: "Retail A-Hole",
+                distance: 0.5,
+                aholeScore: 98,
+                toxicity: 95,
+                annoyance: 99,
+                avoidability: 15,
+                desc: "Asks to speak to crypto's manager. Has never read a whitepaper but has strong opinions about everything.",
+                tags: ["#SpeakToManager", "#Complainer", "#CouponQueen"],
+                behaviors: ["Demands discounts on non-discountable items", "Films employees", "Threatens Yelp reviews"]
+            },
+            {
+                name: "Paper Hands Pete",
+                type: "Crypto A-Hole",
+                distance: 0.8,
+                aholeScore: 76,
+                toxicity: 45,
+                annoyance: 89,
+                avoidability: 67,
+                desc: "Sold at -5% and told everyone the project was dead. Still watching charts from the sidelines.",
+                tags: ["#PaperHands", "#FOMOKing", "#SoldTheBottom"],
+                behaviors: ["Panic sells every dip", "Then FOMOs back at ATH", "Blames devs for his decisions"]
+            },
+            {
+                name: "FUD Master Frank",
+                type: "Crypto A-Hole",
+                distance: 1.2,
+                aholeScore: 91,
+                toxicity: 94,
+                annoyance: 88,
+                avoidability: 45,
+                desc: "Comments 'dead project' under every bullish post. Portfolio is 90% down but gives advice anyway.",
+                tags: ["#FUDSpreader", "#DeadProject", "#TrustMeBro"],
+                behaviors: ["Posts FUD at 3am", "Claims insider knowledge", "Wrong about everything"]
+            },
+            {
+                name: "Shill Machine Steve",
+                type: "Crypto A-Hole",
+                distance: 0.4,
+                aholeScore: 89,
+                toxicity: 78,
+                annoyance: 95,
+                avoidability: 34,
+                desc: "DMs you every new coin. Has been 'early' to 47 rugpulls this month alone.",
+                tags: ["#DMSpammer", "#100xGems", "#NFA"],
+                behaviors: ["Sends unsolicited DMs", "Uses rocket emojis excessively", "Claims every coin is '100x guaranteed'"]
+            },
+            {
+                name: "Influencer Ian",
+                type: "Social Media A-Hole",
+                distance: 2.1,
+                aholeScore: 92,
+                toxicity: 82,
+                annoyance: 91,
+                avoidability: 56,
+                desc: "Paid $500 for a shill tweet. Claims 'not financial advice' while clearly giving financial advice.",
+                tags: ["#PaidPromotion", "#NFA", "#Shill"],
+                behaviors: ["Promotes rugs for money", "Deletes tweets after dumps", "Blocks anyone who questions"]
+            },
+            {
+                name: "Airdrop Andy",
+                type: "Crypto A-Hole",
+                distance: 1.5,
+                aholeScore: 72,
+                toxicity: 35,
+                annoyance: 84,
+                avoidability: 78,
+                desc: "Has 500 wallets. Complains when airdrops check for sybils. Thinks farming is a constitutional right.",
+                tags: ["#SybilFarmer", "#500Wallets", "#AirdropHunter"],
+                behaviors: ["Creates thousands of wallets", "Complains about sybil detection", "Sells airdrops immediately"]
+            },
+            {
+                name: "Technical Tom",
+                type: "Trading A-Hole",
+                distance: 0.9,
+                aholeScore: 68,
+                toxicity: 42,
+                annoyance: 79,
+                avoidability: 82,
+                desc: "Uses 47 indicators that all contradict each other. Still consistently wrong about price predictions.",
+                tags: ["#ChartGuru", "#Fibonacci", "#HeadAndShoulders"],
+                behaviors: ["Draws lines on charts", "Claims TA is science", "Wrong 90% of the time"]
+            },
+            {
+                name: "Anon Dev",
+                type: "Rug A-Hole",
+                distance: 999,
+                aholeScore: 100,
+                toxicity: 100,
+                annoyance: 100,
+                avoidability: 0,
+                desc: "Promised a roadmap 6 months ago. Last seen buying a Lambo. Liquidity? What liquidity?",
+                tags: ["#Rugger", "#AnonDev", "#ByeLiquidity"],
+                behaviors: ["Promises utility", "Delays roadmap forever", "Disappears with funds"]
+            },
+            {
+                name: "NGMI Nancy",
+                type: "Negative A-Hole",
+                distance: 0.6,
+                aholeScore: 77,
+                toxicity: 71,
+                annoyance: 83,
+                avoidability: 61,
+                desc: "Tells everyone they're NGMI while having paper handed every single winner in existence.",
+                tags: ["#NGMI", "#Doomer", "#Hypocrite"],
+                behaviors: ["Calls others NGMI", "Paper hands everything", "Still gives advice"]
+            },
+            {
+                name: "Gym Bro Gary",
+                type: "Fitness A-Hole",
+                distance: 0.2,
+                aholeScore: 71,
+                toxicity: 55,
+                annoyance: 86,
+                avoidability: 45,
+                desc: "Doesn't rerack weights. Grunts louder than necessary. Takes selfies on equipment you're waiting for.",
+                tags: ["#GymBro", "#MirrorSelfie", "#NoRerack"],
+                behaviors: ["Hogs equipment", "Unsolicited fitness advice", "Leaves sweat everywhere"]
+            },
+            {
+                name: "Reply Guy Rick",
+                type: "Twitter A-Hole",
+                distance: 1.1,
+                aholeScore: 74,
+                toxicity: 62,
+                annoyance: 91,
+                avoidability: 88,
+                desc: "First to reply to every tweet. Comments add nothing. Still expects engagement back.",
+                tags: ["#ReplyGuy", "#FirstComment", "#GmGn"],
+                behaviors: ["Replies 'gm' to everything", "Quote tweets with 'This.'", "Ratio attempts that fail"]
+            }
+        ];
+
+        // Conversation state
+        let conversationHistory = [];
+        let isTyping = false;
+
+        // Initialize with welcome message
+        document.addEventListener('DOMContentLoaded', () => {
+            addAgentMessage(getWelcomeMessage());
+        });
+
+        function getWelcomeMessage() {
+            return {
+                text: `<p>* AGENT A-HOLE INITIALIZED *</p>
+                <p>Yo, I'm Agent A-Hole - your personal detector and ranker of nearby A-Holes. My sensors are picking up <strong>${aholeDatabase.length} A-Holes</strong> in your vicinity.</p>
+                <p>What can I do for you?</p>`,
+                quickActions: [
+                    "🔍 Scan for nearby A-Holes",
+                    "🏆 Show A-Hole Leaderboard",
+                    "📡 Activate Radar",
+                    "🎲 Random A-Hole",
+                    "📊 A-Hole Statistics"
+                ]
+            };
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            addUserMessage(message);
+            input.value = '';
+            
+            // Process after a short delay
+            isTyping = true;
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                processUserMessage(message);
+                isTyping = false;
+            }, 1000 + Math.random() * 1500);
+        }
+
+        function processUserMessage(message) {
+            const lowerMsg = message.toLowerCase();
+            
+            if (lowerMsg.includes('scan') || lowerMsg.includes('find') || lowerMsg.includes('nearby') || lowerMsg.includes('search')) {
+                showNearbyAholes();
+            } else if (lowerMsg.includes('leaderboard') || lowerMsg.includes('rank') || lowerMsg.includes('top') || lowerMsg.includes('worst')) {
+                showLeaderboard();
+            } else if (lowerMsg.includes('radar') || lowerMsg.includes('map') || lowerMsg.includes('locate')) {
+                showRadar();
+            } else if (lowerMsg.includes('random') || lowerMsg.includes('surprise')) {
+                showRandomAhole();
+            } else if (lowerMsg.includes('stat') || lowerMsg.includes('analytic') || lowerMsg.includes('data')) {
+                showStatistics();
+            } else if (lowerMsg.includes('crypto') || lowerMsg.includes('trading') || lowerMsg.includes('defi')) {
+                showCryptoAholes();
+            } else if (lowerMsg.includes('help') || lowerMsg.includes('what can')) {
+                showHelp();
+            } else if (lowerMsg.includes('closest') || lowerMsg.includes('nearest')) {
+                showClosestAhole();
+            } else if (lowerMsg.includes('avoid') || lowerMsg.includes('safe')) {
+                showAvoidanceAdvice();
+            } else {
+                // Try to find a specific a-hole by name
+                const foundAhole = aholeDatabase.find(a => 
+                    lowerMsg.includes(a.name.toLowerCase().split(' ')[0].toLowerCase())
+                );
+                
+                if (foundAhole) {
+                    showAholeProfile(foundAhole);
+                } else {
+                    showDefaultResponse();
+                }
+            }
+        }
+
+        function showNearbyAholes() {
+            const nearby = [...aholeDatabase]
+                .filter(a => a.distance < 5)
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 4);
+            
+            let html = `<p>🔍 <strong>SCAN COMPLETE</strong> - Found ${nearby.length} A-Holes within 5 miles:</p>`;
+            
+            nearby.forEach(ahole => {
+                html += createAholeCard(ahole);
+            });
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["🏆 Show Rankings", "📡 Activate Radar", "🎲 Find Another"]
+            });
+        }
+
+        function showLeaderboard() {
+            const ranked = [...aholeDatabase].sort((a, b) => b.aholeScore - a.aholeScore).slice(0, 5);
+            
+            let html = `<p>🏆 <strong>A-HOLE LEADERBOARD</strong> - Top 5 Worst Offenders:</p>
+            <div class="leaderboard">
+                <div class="leaderboard-header">* HALL OF SHAME *</div>`;
+            
+            ranked.forEach((ahole, index) => {
+                const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : 'normal';
+                html += `
+                    <div class="leaderboard-item">
+                        <div class="lb-rank ${rankClass}">${index + 1}</div>
+                        <div class="lb-info">
+                            <div class="lb-name">${ahole.name}</div>
+                            <div class="lb-type">${ahole.type}</div>
+                        </div>
+                        <div class="lb-score">${ahole.aholeScore}</div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["🔍 Scan Nearby", "📊 View Stats", "🎲 Random A-Hole"]
+            });
+        }
+
+        function showRadar() {
+            const nearby = aholeDatabase.filter(a => a.distance < 3);
+            
+            let blipsHtml = '';
+            nearby.forEach(ahole => {
+                const angle = Math.random() * 360;
+                const distance = (ahole.distance / 3) * 80;
+                const x = 100 + Math.cos(angle * Math.PI / 180) * distance;
+                const y = 100 + Math.sin(angle * Math.PI / 180) * distance;
+                blipsHtml += `<div class="radar-blip" style="left: ${x}px; top: ${y}px;" title="${ahole.name}"></div>`;
+            });
+            
+            let html = `<p>📡 <strong>A-HOLE RADAR ACTIVATED</strong></p>
+            <div class="radar-container">
+                <div class="radar">
+                    <div class="radar-center"></div>
+                    ${blipsHtml}
+                </div>
+                <div class="radar-label">Detecting ${nearby.length} A-Holes within 3 mile radius</div>
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.875rem; opacity: 0.7;">Green dot = You | Pink dots = A-Holes</p>`;
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["🔍 Full Scan", "🏆 Leaderboard", "📊 Statistics"]
+            });
+        }
+
+        function showRandomAhole() {
+            const randomAhole = aholeDatabase[Math.floor(Math.random() * aholeDatabase.length)];
+            
+            let html = `<p>🎲 <strong>RANDOM A-HOLE DETECTED!</strong></p>`;
+            html += createAholeCard(randomAhole, true);
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["🎲 Another Random", "🔍 Scan Nearby", "🏆 Leaderboard"]
+            });
+        }
+
+        function showStatistics() {
+            const avgScore = Math.round(aholeDatabase.reduce((sum, a) => sum + a.aholeScore, 0) / aholeDatabase.length);
+            const avgToxicity = Math.round(aholeDatabase.reduce((sum, a) => sum + a.toxicity, 0) / aholeDatabase.length);
+            const cryptoAholes = aholeDatabase.filter(a => a.type.includes('Crypto')).length;
+            const nearbyCount = aholeDatabase.filter(a => a.distance < 1).length;
+            
+            let html = `<p>📊 <strong>A-HOLE ANALYTICS</strong></p>
+            <div class="ahole-card">
+                <div class="ahole-stats" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="ahole-stat">
+                        <div class="ahole-stat-value">${aholeDatabase.length}</div>
+                        <div class="ahole-stat-label">Total A-Holes</div>
+                    </div>
+                    <div class="ahole-stat">
+                        <div class="ahole-stat-value">${avgScore}</div>
+                        <div class="ahole-stat-label">Avg A-Hole Score</div>
+                    </div>
+                    <div class="ahole-stat">
+                        <div class="ahole-stat-value">${avgToxicity}%</div>
+                        <div class="ahole-stat-label">Avg Toxicity</div>
+                    </div>
+                    <div class="ahole-stat">
+                        <div class="ahole-stat-value">${nearbyCount}</div>
+                        <div class="ahole-stat-label">Within 1 Mile</div>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,182,193,0.1);">
+                    <p style="font-size: 0.8125rem; opacity: 0.7;">
+                        <strong style="color: var(--pink);">Fun Fact:</strong> ${cryptoAholes} of the detected A-Holes are crypto-related. 
+                        The crypto space has a ${Math.round(cryptoAholes/aholeDatabase.length*100)}% A-Hole concentration rate.
+                    </p>
+                </div>
+            </div>`;
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["🔍 Find Them", "🏆 Rankings", "📡 Radar"]
+            });
+        }
+
+        function showCryptoAholes() {
+            const cryptoAholes = aholeDatabase.filter(a => 
+                a.type.includes('Crypto') || a.type.includes('Trading') || a.type.includes('Rug')
+            );
+            
+            let html = `<p>₿ <strong>CRYPTO A-HOLES DETECTED</strong> - ${cryptoAholes.length} found:</p>`;
+            
+            cryptoAholes.slice(0, 3).forEach(ahole => {
+                html += createAholeCard(ahole);
+            });
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["🔍 All A-Holes", "🏆 Leaderboard", "📊 Statistics"]
+            });
+        }
+
+        function showClosestAhole() {
+            const closest = [...aholeDatabase].sort((a, b) => a.distance - b.distance)[0];
+            
+            let html = `<p>⚠️ <strong>DANGER - CLOSEST A-HOLE DETECTED!</strong></p>
+            <p style="color: var(--hot-pink); font-size: 0.875rem;">Only ${closest.distance} miles away - PROCEED WITH CAUTION</p>`;
+            html += createAholeCard(closest, true);
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["📡 Track on Radar", "🔍 Find Others", "🏃 Avoidance Tips"]
+            });
+        }
+
+        function showAvoidanceAdvice() {
+            const tips = [
+                "Maintain at least 10 feet distance from detected A-Holes",
+                "Avoid eye contact - it may trigger unsolicited opinions",
+                "If approached, respond with 'I need to take this call'",
+                "Never engage in crypto discussions in public spaces",
+                "Keep headphones visible even if not playing music",
+                "The phrase 'I'll circle back' can confuse Corporate A-Holes",
+                "Never show your portfolio in public",
+                "If a Karen approaches, immediately ask to speak to YOUR manager"
+            ];
+            
+            const randomTips = tips.sort(() => 0.5 - Math.random()).slice(0, 4);
+            
+            let html = `<p>🏃 <strong>A-HOLE AVOIDANCE PROTOCOL</strong></p>
+            <div class="ahole-card">
+                <p style="color: var(--pink); margin-bottom: 0.75rem;">Survival Tips:</p>
+                <ul style="list-style: none; font-size: 0.875rem;">
+                    ${randomTips.map(tip => `<li style="margin-bottom: 0.5rem; padding-left: 1rem; position: relative;">
+                        <span style="position: absolute; left: 0; color: var(--pink);">*</span>${tip}
+                    </li>`).join('')}
+                </ul>
+            </div>`;
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["🔍 Scan Area", "📡 Activate Radar", "🎲 Random A-Hole"]
+            });
+        }
+
+        function showAholeProfile(ahole) {
+            let html = `<p>📋 <strong>A-HOLE PROFILE LOADED</strong></p>`;
+            html += createAholeCard(ahole, true);
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["🔍 Find Similar", "🏆 Rankings", "🎲 Random A-Hole"]
+            });
+        }
+
+        function showHelp() {
+            let html = `<p>🤖 <strong>AGENT A-HOLE CAPABILITIES</strong></p>
+            <div class="ahole-card">
+                <p style="margin-bottom: 0.75rem;">Here's what I can do:</p>
+                <ul style="list-style: none; font-size: 0.875rem;">
+                    <li style="margin-bottom: 0.5rem;"><span style="color: var(--pink);">🔍 Scan/Find</span> - Detect nearby A-Holes</li>
+                    <li style="margin-bottom: 0.5rem;"><span style="color: var(--pink);">🏆 Leaderboard</span> - Rank worst A-Holes</li>
+                    <li style="margin-bottom: 0.5rem;"><span style="color: var(--pink);">📡 Radar</span> - Visual A-Hole map</li>
+                    <li style="margin-bottom: 0.5rem;"><span style="color: var(--pink);">📊 Statistics</span> - A-Hole analytics</li>
+                    <li style="margin-bottom: 0.5rem;"><span style="color: var(--pink);">🎲 Random</span> - Discover random A-Holes</li>
+                    <li style="margin-bottom: 0.5rem;"><span style="color: var(--pink);">🏃 Avoid</span> - Avoidance strategies</li>
+                    <li style="margin-bottom: 0.5rem;"><span style="color: var(--pink);">[Name]</span> - Search specific A-Holes</li>
+                </ul>
+            </div>`;
+            
+            addAgentMessage({
+                text: html,
+                quickActions: ["🔍 Start Scanning", "🏆 Leaderboard", "📡 Radar"]
+            });
+        }
+
+        function showDefaultResponse() {
+            const responses = [
+                "My A-Hole sensors are tingling... but I didn't quite catch that. Try 'scan', 'leaderboard', or 'radar'!",
+                "Hmm, that's not in my A-Hole database. Want me to scan for nearby A-Holes instead?",
+                "I'm optimized for A-Hole detection, not that. Try asking me to find or rank A-Holes!",
+                "My circuits are confused. Let me scan for A-Holes while you rephrase that."
+            ];
+            
+            addAgentMessage({
+                text: `<p>${responses[Math.floor(Math.random() * responses.length)]}</p>`,
+                quickActions: ["🔍 Scan Nearby", "🏆 Leaderboard", "❓ Help"]
+            });
+        }
+
+        function createAholeCard(ahole, detailed = false) {
+            let html = `
+            <div class="ahole-card">
+                <div class="ahole-header">
+                    <div class="ahole-name">${ahole.name}</div>
+                    <div class="ahole-rank">${ahole.aholeScore}/100</div>
+                </div>
+                <div class="ahole-stats">
+                    <div class="ahole-stat">
+                        <div class="ahole-stat-value">${ahole.distance === 999 ? '???' : ahole.distance + 'mi'}</div>
+                        <div class="ahole-stat-label">Distance</div>
+                    </div>
+                    <div class="ahole-stat">
+                        <div class="ahole-stat-value">${ahole.toxicity}%</div>
+                        <div class="ahole-stat-label">Toxicity</div>
+                    </div>
+                    <div class="ahole-stat">
+                        <div class="ahole-stat-value">${ahole.annoyance}%</div>
+                        <div class="ahole-stat-label">Annoyance</div>
+                    </div>
+                </div>
+                <div class="ahole-desc">${ahole.desc}</div>
+                <div class="ahole-tags">
+                    ${ahole.tags.map(tag => `<span class="ahole-tag">${tag}</span>`).join('')}
+                </div>`;
+            
+            if (detailed && ahole.behaviors) {
+                html += `
+                <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,182,193,0.1);">
+                    <p style="font-size: 0.75rem; color: var(--pink); margin-bottom: 0.5rem;">Known Behaviors:</p>
+                    <ul style="list-style: none; font-size: 0.8125rem; opacity: 0.8;">
+                        ${ahole.behaviors.map(b => `<li style="margin-bottom: 0.25rem;">• ${b}</li>`).join('')}
+                    </ul>
+                </div>`;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+
+        function addUserMessage(text) {
+            const messagesDiv = document.getElementById('messages');
+            const messageHtml = `
+                <div class="message user">
+                    <div class="message-avatar">👤</div>
+                    <div class="message-content">
+                        <div class="message-text">${escapeHtml(text)}</div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.insertAdjacentHTML('beforeend', messageHtml);
+            scrollToBottom();
+        }
+
+        function addAgentMessage(response) {
+            const messagesDiv = document.getElementById('messages');
+            let quickActionsHtml = '';
+            
+            if (response.quickActions) {
+                quickActionsHtml = `
+                    <div class="quick-actions">
+                        ${response.quickActions.map(action => 
+                            `<button class="quick-action" onclick="handleQuickAction('${escapeHtml(action)}')">${action}</button>`
+                        ).join('')}
+                    </div>
+                `;
+            }
+            
+            const messageHtml = `
+                <div class="message agent">
+                    <div class="message-avatar">
+                        <img src="ahole-logo.png" alt="Agent">
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">${response.text || response}</div>
+                        ${quickActionsHtml}
+                    </div>
+                </div>
+            `;
+            messagesDiv.insertAdjacentHTML('beforeend', messageHtml);
+            scrollToBottom();
+        }
+
+        function showTypingIndicator() {
+            const messagesDiv = document.getElementById('messages');
+            const typingHtml = `
+                <div class="message agent" id="typingIndicator">
+                    <div class="message-avatar">
+                        <img src="ahole-logo.png" alt="Agent">
+                    </div>
+                    <div class="message-content">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.insertAdjacentHTML('beforeend', typingHtml);
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        function handleQuickAction(action) {
+            const input = document.getElementById('userInput');
+            input.value = action;
+            sendMessage();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function scrollToBottom() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Handle enter key
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Copy CA
+        function copyCA() {
+            const ca = document.getElementById('caValue').textContent;
+            if (ca !== 'SCANNING...') {
+                navigator.clipboard.writeText(ca);
+                const caDisplay = document.querySelector('.ca-display');
+                const originalText = document.getElementById('caValue').textContent;
+                document.getElementById('caValue').textContent = 'COPIED!';
+                caDisplay.style.borderColor = '#39FF14';
+                setTimeout(() => {
+                    document.getElementById('caValue').textContent = originalText;
+                    caDisplay.style.borderColor = '';
+                }, 1500);
+            }
+        }
+    </script>
+</body>
+</html>

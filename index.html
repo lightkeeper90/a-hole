@@ -1227,7 +1227,7 @@
         // Copy CA
         function copyCA() {
             const ca = document.getElementById('caValue').textContent;
-            if (ca !== 'SCANNING...') {
+            if (ca !== 'hello') {
                 navigator.clipboard.writeText(ca);
                 const caDisplay = document.querySelector('.ca-display');
                 const originalText = document.getElementById('caValue').textContent;

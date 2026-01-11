@@ -72,6 +72,20 @@
             color: var(--pink);
         }
 
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .powered-by {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.05em;
+            opacity: 0.6;
+            color: var(--hot-pink);
+        }
+
         .logo-icon {
             font-size: 2rem;
             filter: drop-shadow(0 0 10px rgba(255, 182, 193, 0.5));
@@ -396,7 +410,10 @@
     <header>
         <div class="logo">
             <span class="logo-icon">💢</span>
-            Niji Waifu
+            <div class="logo-text">
+                <span>Niji Waifu</span>
+                <span class="powered-by">powered by Niji 7 engine</span>
+            </div>
         </div>
         <div class="mood-display">
             <span class="mood-label">MOOD:</span>
